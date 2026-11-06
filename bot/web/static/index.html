@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="tr" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>CanBot</title>
+  <meta name="description" content="Binance vadeli işlemler için otomatik, risk yönetimli işlem botu">
+  <meta name="theme-color" content="#0b1020">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="CanBot">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- ===================== Giriş ===================== -->
+  <section id="auth" class="auth hidden" aria-label="Giriş">
+    <div class="auth-card">
+      <img class="auth-logo" src="/static/icons/icon-192.png" alt="" width="64" height="64">
+      <h1>CanBot</h1>
+      <p class="muted" id="auth-sub">Devam etmek için şifrenizi girin.</p>
+      <form id="auth-form" autocomplete="on">
+        <label class="field">
+          <span>Şifre</span>
+          <input id="auth-pass" type="password" autocomplete="current-password" required minlength="6">
+        </label>
+        <label class="field hidden" id="auth-pass2-wrap">
+          <span>Şifre (tekrar)</span>
+          <input id="auth-pass2" type="password" autocomplete="new-password" minlength="6">
+        </label>
+        <p class="form-error" id="auth-error" role="alert"></p>
+        <button class="btn primary block" type="submit" id="auth-btn">Giriş yap</button>
+      </form>
+      <p class="tiny muted" id="auth-hint"></p>
+    </div>
+  </section>
+
+  <!-- ===================== Uygulama ===================== -->
+  <div id="app" class="app hidden">
+    <aside class="sidebar" aria-label="Menü">
+      <div class="brand">
+        <img src="/static/icons/icon-64.png" alt="" width="34" height="34">
+        <div>
+          <strong>CanBot</strong>
+          <span class="tiny muted">Otomatik vadeli işlem</span>
+        </div>
+      </div>
+      <nav class="nav" id="nav">
+        <button data-tab="home" class="active"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>Özet</span></button>
+        <button data-tab="market"><svg viewBox="0 0 24 24"><path d="M4 19h16M6 15l4-5 3 3 5-7"/></svg><span>Piyasa</span></button>
+        <button data-tab="trades"><svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg><span>İşlemler</span></button>
+        <button data-tab="test"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3"/></svg><span>Test</span></button>
+        <button data-tab="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ayarlar</span></button>
+      </nav>
+      <div class="sidebar-foot">
+        <div class="mini-status" id="mini-status"></div>
+        <span class="tiny muted" id="version"></span>
+      </div>
+    </aside>
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <img class="topbar-logo" src="/static/icons/icon-64.png" alt="" width="28" height="28">
+        <h2 id="page-title">Özet</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="pill" id="mode-pill">—</span>
+        <span class="conn" id="conn-dot" title="Bağlantı"></span>
+      </div>
+    </header>
+
+    <main class="content" id="content">
+      <!-- ÖZET -->
+      <section class="tab" id="tab-home">
+        <div id="alerts"></div>
+        <div class="hero card">
+          <div class="hero-main">
+            <div class="hero-label">Otomatik işlem</div>
+            <div class="hero-status" id="hero-status">—</div>
+            <div class="hero-sub muted" id="hero-sub"></div>
+          </div>
+          <label class="switch big" title="Otomatik işlemi aç/kapat">
+            <input type="checkbox" id="auto-toggle">
+            <span class="slider"></span>
+          </label>
+        </div>
+
+        <div class="kpis" id="kpis"></div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-head"><h3>Bakiye geçmişi</h3><span class="tiny muted" id="equity-range">Son 30 gün</span></div>
+            <div class="chart" id="equity-chart"></div>
+          </div>
+          <div class="card" id="market-card">
+            <div class="card-head"><h3>Piyasa durumu</h3><button class="link" data-goto="market">Detay →</button></div>
+            <div id="market-overview"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h3>Açık pozisyonlar <span class="count" id="pos-count">0</span></h3>
+            <button class="btn danger sm" id="close-all-btn">Tümünü kapat</button>
+          </div>
+          <div id="positions"></div>
+          <div id="external"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Son işlemler</h3><button class="link" data-goto="trades">Tümü →</button></div>
+          <div id="recent-trades"></div>
+        </div>
+        <p class="disclaimer">Kaldıraçlı işlemler yüksek risk içerir; bot kâr garantisi vermez. Kaybetmeyi göze alamayacağınız parayla işlem yapmayın.</p>
+      </section>
+
+      <!-- PİYASA -->
+      <section class="tab hidden" id="tab-market">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <h3>Piyasa tarayıcı</h3>
+              <span class="tiny muted" id="scan-info">—</span>
+            </div>
+            <button class="btn sm" id="scan-btn">Şimdi tara</button>
+          </div>
+          <div id="market-overview-2"></div>
+          <div class="chips" id="market-filter">
+            <button class="chip active" data-f="all">Tümü</button>
+            <button class="chip" data-f="signal">Sinyaller</button>
+            <button class="chip" data-f="LONG">Yükseliş</button>
+            <button class="chip" data-f="SHORT">Düşüş</button>
+          </div>
+          <div id="scanner"></div>
+          <p class="tiny muted">Bot, en likit coinleri tarar; büyük zaman diliminde trendi, küçük zaman diliminde giriş anını arar. Bir coine dokunarak grafiğini ve analizini görebilirsiniz.</p>
+        </div>
+      </section>
+
+      <!-- İŞLEMLER -->
+      <section class="tab hidden" id="tab-trades">
+        <div class="kpis" id="trade-stats"></div>
+        <div class="card">
+          <div class="card-head"><h3>İşlem geçmişi</h3></div>
+          <div id="trade-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>Bot günlüğü</h3></div>
+          <div id="logs" class="logs"></div>
+        </div>
+      </section>
+
+      <!-- TEST -->
+      <section class="tab hidden" id="tab-test">
+        <div class="card">
+          <div class="card-head"><h3>Geçmiş testi (backtest)</h3></div>
+          <p class="muted">Mevcut ayarlarınızı geçmiş Binance verisinde, komisyon ve kaymayla birlikte dener. Ayar değiştirmeden önce burada deneyin.</p>
+          <div class="form-row">
+            <label class="field"><span>Süre</span>
+              <select id="bt-days"><option value="30">30 gün</option><option value="90" selected>90 gün</option><option value="180">180 gün</option></select>
+            </label>
+            <label class="field"><span>Coin sayısı</span>
+              <select id="bt-symbols"><option value="10">10</option><option value="20" selected>20</option><option value="30">30</option></select>
+            </label>
+            <button class="btn primary" id="bt-run">Testi başlat</button>
+          </div>
+          <div id="bt-progress" class="hidden">
+            <div class="progress"><span id="bt-bar"></span></div>
+            <p class="tiny muted" id="bt-msg"></p>
+          </div>
+        </div>
+        <div id="bt-result"></div>
+      </section>
+
+      <!-- AYARLAR -->
+      <section class="tab hidden" id="tab-settings">
+        <div class="card" id="mode-card">
+          <div class="card-head"><h3>Çalışma modu</h3></div>
+          <div class="segmented" id="mode-seg">
+            <button data-mode="paper">Sanal</button>
+            <button data-mode="testnet">Testnet</button>
+            <button data-mode="live">Gerçek</button>
+          </div>
+          <p class="muted" id="mode-desc"></p>
+          <div id="live-confirm" class="hidden callout danger">
+            <strong>Gerçek parayla işlem yapılacak.</strong>
+            <p>Bot, Binance vadeli hesabınızda kendi kendine pozisyon açıp kapatır. Kayıp yaşayabilirsiniz. Onaylamak için aşağıya <b>GERÇEK PARA</b> yazın.</p>
+            <input id="live-confirm-input" type="text" placeholder="GERÇEK PARA" autocomplete="off">
+          </div>
+          <div class="actions"><button class="btn primary" id="mode-save">Modu uygula</button></div>
+        </div>
+
+        <div class="card" id="keys-card">
+          <div class="card-head"><h3>Binance API anahtarları</h3></div>
+          <div class="segmented small" id="keys-seg">
+            <button data-k="live" class="active">Gerçek hesap</button>
+            <button data-k="testnet">Testnet</button>
+          </div>
+          <p class="tiny muted" id="keys-status"></p>
+          <label class="field"><span>API Key</span><input id="api-key" type="text" autocomplete="off" spellcheck="false" placeholder="API Key"></label>
+          <label class="field"><span>Secret Key</span><input id="api-secret" type="password" autocomplete="off" spellcheck="false" placeholder="Secret Key"></label>
+          <div class="actions">
+            <button class="btn primary" id="keys-save">Kaydet</button>
+            <button class="btn" id="keys-test">Bağlantıyı test et</button>
+            <button class="btn ghost" id="keys-diag">Bağlantı sorununu teşhis et</button>
+            <button class="btn ghost" id="keys-clear">Sil</button>
+          </div>
+          <div id="keys-result"></div>
+          <details class="guide">
+            <summary>API anahtarı nasıl alınır? (adım adım)</summary>
+            <ol>
+              <li>Önce Binance'te <b>Vadeli (Futures) hesabını açın</b>. Vadeli hesaptan önce oluşturulan anahtara Vadeli izni verilemez.</li>
+              <li>Bilgisayarda: profil simgesi → <b>Hesap</b> → <b>API Yönetimi</b>. Telefonda: <b>Binance Pro</b> modu → <b>Daha fazla</b> → <b>Diğer</b> → <b>API Yönetimi</b>.</li>
+              <li><b>API Oluştur</b> → <b>Sistem tarafından oluşturulan</b> seçin, isim verin (ör. CanBot), doğrulamayı tamamlayın.</li>
+              <li>API Key ve Secret Key'i hemen kopyalayın; Secret Key sonra tekrar gösterilmez.</li>
+              <li><b>Kısıtlamaları düzenle</b> → <b>Yalnızca güvenilir IP'lere erişimi kısıtla</b> seçip internet IP adresinizi ekleyin (Google'da “IP adresim”). <b>Zorunlu:</b> IP kısıtlaması olmadan Binance bu anahtara işlem izni vermez.</li>
+              <li><b>Okumayı Etkinleştir</b> ve <b>Vadeli İşlemleri Etkinleştir</b> kutularını işaretleyin. <b>Para çekme iznini ASLA açmayın.</b></li>
+              <li>API Key ve Secret Key'i buraya yapıştırıp <b>Kaydet</b> ve <b>Bağlantıyı test et</b>'e basın. Son olarak USDT'yi Spot'tan USDⓈ-M Vadeli cüzdana aktarın.</li>
+              <li>Testnet için anahtarları Binance Demo Trading (demo.binance.com) / Futures Testnet sayfasından alın.</li>
+            </ol>
+          </details>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Risk seviyesi</h3></div>
+          <div class="presets" id="presets">
+            <button data-preset="careful"><strong>Temkinli</strong><span>İşlem başı %0,5 risk · 3x</span></button>
+            <button data-preset="balanced"><strong>Dengeli</strong><span>İşlem başı %1 risk · 5x · önerilen</span></button>
+            <button data-preset="aggressive"><strong>Atak</strong><span>İşlem başı %2 risk · 5x</span></button>
+          </div>
+          <p class="tiny muted">Riski artırmak kârı değil, en çok kayıpları büyütür. Testlerde riskin iki katına çıkması, en büyük düşüşü %17'den %32'ye çıkardı.</p>
+        </div>
+
+        <form class="card" id="settings-form">
+          <div class="card-head"><h3>Gelişmiş ayarlar</h3><button type="button" class="link" id="defaults-btn">Önerilenlere dön</button></div>
+          <div id="settings-fields"></div>
+          <div class="actions sticky-actions"><button class="btn primary" type="submit">Ayarları kaydet</button></div>
+        </form>
+
+        <div class="card" id="paper-card">
+          <div class="card-head"><h3>Sanal hesap</h3></div>
+          <p class="muted">Sanal modda gerçek fiyatlarla, para riske girmeden işlem yapılır. Sıfırlarsanız sanal bakiye ve sanal işlem geçmişi silinir.</p>
+          <div class="actions"><button class="btn" id="paper-reset">Sanal hesabı sıfırla</button></div>
+        </div>
+
+        <div class="card" id="desktop-card">
+          <div class="card-head"><h3>Windows</h3></div>
+          <label class="row-toggle"><span><strong>Windows açılınca başlat</strong><small>Bilgisayar açıldığında CanBot simge durumunda başlar.</small></span><span class="switch"><input type="checkbox" id="opt-autostart"><span class="slider"></span></span></label>
+          <label class="row-toggle"><span><strong>Bilgisayarı uyanık tut</strong><small>Otomatik işlem açıkken bilgisayar uyku moduna geçmez (ekran kapanabilir).</small></span><span class="switch"><input type="checkbox" id="opt-awake"><span class="slider"></span></span></label>
+          <label class="row-toggle"><span><strong>Masaüstü bildirimleri</strong><small>Pozisyon açılınca/kapanınca Windows bildirimi gösterir.</small></span><span class="switch"><input type="checkbox" id="opt-notify"><span class="slider"></span></span></label>
+          <p class="tiny muted">Pencereyi kapattığınızda bot saatin yanındaki simgede çalışmaya devam eder. Tamamen kapatmak için simgeye sağ tıklayıp “Çıkış”ı seçin.</p>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Telefon (iPhone) bağlantısı</h3></div>
+          <div class="phone">
+            <div class="qr" id="qr"></div>
+            <div>
+              <ol class="steps">
+                <li>iPhone ile bilgisayar <b>aynı Wi-Fi</b>'ye bağlı olsun.</li>
+                <li>Kamerayla QR kodu okutun ya da Safari'de şu adresi açın: <code id="lan-url">—</code></li>
+                <li>Safari'de <b>Paylaş</b> → <b>Ana Ekrana Ekle</b>'ye basın. CanBot artık uygulama gibi açılır.</li>
+                <li>Giriş için aşağıda belirlediğiniz şifreyi kullanın.</li>
+              </ol>
+              <p class="tiny muted">Evden uzaktayken bağlanmak için Tailscale gibi güvenli bir VPN kullanın; botu internete doğrudan açmayın.</p>
+            </div>
+          </div>
+          <form id="pw-form" class="pw-form">
+            <h4 id="pw-title">Telefon girişi için şifre belirleyin</h4>
+            <label class="field" id="pw-old-wrap"><span>Mevcut şifre</span><input id="pw-old" type="password" autocomplete="current-password"></label>
+            <label class="field"><span>Yeni şifre (en az 6 karakter)</span><input id="pw-new" type="password" autocomplete="new-password" minlength="6"></label>
+            <div class="actions"><button class="btn" type="submit">Şifreyi kaydet</button></div>
+          </form>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Telegram bildirimleri (isteğe bağlı)</h3></div>
+          <p class="tiny muted">Telegram'da @BotFather ile bot oluşturup token alın; @userinfobot ile sohbet kimliğinizi (chat id) öğrenin.</p>
+          <label class="field"><span>Bot token</span><input id="tg-token" type="password" autocomplete="off" placeholder="123456:ABC…"></label>
+          <label class="field"><span>Chat id</span><input id="tg-chat" type="text" autocomplete="off" placeholder="123456789"></label>
+          <div class="actions"><button class="btn" id="tg-save">Kaydet</button><button class="btn ghost" id="tg-test">Test mesajı gönder</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><h3>Hakkında</h3></div>
+          <p class="muted">CanBot, Binance USDⓈ-M vadeli işlemlerde trend takibi yapan, her işleme borsada stop-loss koyan, günlük zarar ve en büyük düşüş limitleriyle kendini durdurabilen bir bottur. Geçmiş test sonuçları geleceği garanti etmez.</p>
+          <div class="actions"><button class="btn ghost" id="logout-btn">Oturumu kapat</button></div>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" id="tabbar" aria-label="Sekmeler"></nav>
+  </div>
+
+  <!-- Coin detay paneli -->
+  <div class="sheet hidden" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+    <div class="sheet-backdrop" data-close></div>
+    <div class="sheet-body">
+      <div class="sheet-head">
+        <h3 id="sheet-title">—</h3>
+        <button class="icon-btn" data-close aria-label="Kapat">✕</button>
+      </div>
+      <div id="sheet-content"></div>
+    </div>
+  </div>
+
+  <!-- Onay penceresi -->
+  <div class="modal hidden" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h3 id="modal-title"></h3>
+      <p id="modal-text" class="muted"></p>
+      <div class="actions end">
+        <button class="btn ghost" id="modal-cancel">Vazgeç</button>
+        <button class="btn danger" id="modal-ok">Onayla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- İlk kurulum sihirbazı -->
+  <div class="modal hidden" id="wizard" role="dialog" aria-modal="true" aria-labelledby="wz-title">
+    <div class="modal-card wide" id="wizard-card"></div>
+  </div>
+
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

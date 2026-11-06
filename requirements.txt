@@ -1,0 +1,6 @@
+# CanBot çekirdek bağımlılıkları (sunucu + bot)
+fastapi>=0.110,<1
+uvicorn>=0.29
+httpx>=0.27,<1
+qrcode>=7.4
+truststore>=0.9
